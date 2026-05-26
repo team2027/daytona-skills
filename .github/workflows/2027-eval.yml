@@ -1,0 +1,41 @@
+name: 2027 eval
+on:
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  pull-requests: write
+  statuses: write
+  contents: read
+
+env:
+  PROMPT_ID: d7eb77fe-fb82-4af4-8e02-30219e77eeb5
+
+jobs:
+  eval:
+    if: "contains(github.event.pull_request.labels.*.name, 'trigger: preview')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Compute skillsInstall from PR head
+        id: skills
+        env:
+          SHA:  ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -euo pipefail
+          # Install directly from the PR's fork+SHA so the eval tests the PR version
+          echo "install=npx -y skills add https://github.com/${REPO}#${SHA} --skill daytona --yes" >> "$GITHUB_OUTPUT"
+
+      - name: Run 2027 eval
+        uses: team2027/evals-action@f9c25786d4e14756afa82bca91fbe0a43cf73ef3
+        with:
+          api-key: ${{ secrets.EVALS_API_KEY }}
+          prompt-id: ${{ env.PROMPT_ID }}
+          template-vars: |
+            { "skillsInstall": "${{ steps.skills.outputs.install }}" }
+          wait-timeout-minutes: 60

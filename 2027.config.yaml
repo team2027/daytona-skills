@@ -1,0 +1,9 @@
+# Per-repo skill-audit config.
+# Extends the bundled defaults shipped with @team2027/skill-audit.
+# Schema: see github.com/team2027/skill-audit src/types.ts
+
+# Severity overrides for shipped rules: "error" | "warn" | "info" | "off"
+overrides:
+  # Demote: license file is documentation, we accept it
+  HYGIENE-020:
+    severity: info
