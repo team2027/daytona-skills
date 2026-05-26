@@ -1,0 +1,46 @@
+name: 2027 eval
+on:
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  pull-requests: write
+  statuses: write
+  contents: read
+
+env:
+  PROMPT_ID: TODO
+
+jobs:
+  eval:
+    if: "contains(github.event.pull_request.labels.*.name, 'trigger: preview')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Compute skillsInstall + url-map proxy host
+        id: skills
+        env:
+          SHA:  ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${SHA:0:12}"
+          ORG="${REPO%/*}"
+          NAME="${REPO#*/}"
+          echo "install=npx -y skills add https://skills.daytona.io" >> "$GITHUB_OUTPUT"
+          echo "proxy_host=https://${SHORT_SHA}--${ORG}--${NAME}.2027.ax" >> "$GITHUB_OUTPUT"
+
+      - name: Run 2027 eval
+        uses: team2027/evals-action@f9c25786d4e14756afa82bca91fbe0a43cf73ef3
+        with:
+          api-key: ${{ secrets.EVALS_API_KEY }}
+          prompt-id: ${{ env.PROMPT_ID }}
+          url-map: |
+            { "skills.daytona.io": "${{ steps.skills.outputs.proxy_host }}" }
+          template-vars: |
+            { "skillsInstall": "${{ steps.skills.outputs.install }}" }
+          wait-timeout-minutes: 60
