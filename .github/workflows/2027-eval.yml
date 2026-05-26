@@ -21,21 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 65
     steps:
-      - name: Compute skillsInstall from PR head
-        id: skills
-        env:
-          SHA:  ${{ github.event.pull_request.head.sha }}
-          REPO: ${{ github.event.pull_request.head.repo.full_name }}
-        run: |
-          set -euo pipefail
-          # Install directly from the PR's fork+SHA so the eval tests the PR version
-          echo "install=npx -y skills add https://github.com/${REPO}#${SHA} --skill daytona --yes" >> "$GITHUB_OUTPUT"
-
       - name: Run 2027 eval
         uses: team2027/evals-action@f9c25786d4e14756afa82bca91fbe0a43cf73ef3
         with:
           api-key: ${{ secrets.EVALS_API_KEY }}
           prompt-id: ${{ env.PROMPT_ID }}
-          template-vars: |
-            { "skillsInstall": "${{ steps.skills.outputs.install }}" }
           wait-timeout-minutes: 60
