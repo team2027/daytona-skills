@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  PROMPT_ID: d7eb77fe-fb82-4af4-8e02-30219e77eeb5
+  PROMPT_ID: 2c2e5c16-c2f6-42f4-8ea7-f0b9de067c22
 
 jobs:
   eval:
@@ -21,9 +21,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 65
     steps:
+      - name: Compute proxy host for PR skills
+        id: skills
+        env:
+          SHA:  ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${SHA:0:12}"
+          ORG="${REPO%/*}"
+          NAME="${REPO#*/}"
+          echo "proxy_host=https://${SHORT_SHA}--${ORG}--${NAME}.2027.ax" >> "$GITHUB_OUTPUT"
+
       - name: Run 2027 eval
         uses: team2027/evals-action@f9c25786d4e14756afa82bca91fbe0a43cf73ef3
         with:
           api-key: ${{ secrets.EVALS_API_KEY }}
           prompt-id: ${{ env.PROMPT_ID }}
+          template-vars: |
+            { "skillsInstall": "npx -y skills add ${{ steps.skills.outputs.proxy_host }} --skill daytona --yes" }
           wait-timeout-minutes: 60
