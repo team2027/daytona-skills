@@ -56,10 +56,12 @@ Schema: **CreateSnapshot**
 | `entrypoint` | array of string | No | The entrypoint command for the snapshot |
 | `cpu` | integer | No | CPU cores allocated to the resulting sandbox |
 | `gpu` | integer | No | GPU units allocated to the resulting sandbox |
+| `gpuType` | array of [GpuType](#schema-gputype) | No | Preferred GPU type for the resulting sandbox. |
 | `memory` | integer | No | Memory allocated to the resulting sandbox in GB |
 | `disk` | integer | No | Disk space allocated to the sandbox in GB |
 | `buildInfo` | object | No | Build information for the snapshot |
 | `regionId` | string | No | ID of the region where the snapshot will be available. Defaults to organization default region if not specified. |
+| `sandboxClass` | object | No | Target sandbox class. Determines which runners can host sandboxes created from this snapshot. |
 
 ### Responses
 
