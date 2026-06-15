@@ -24,6 +24,7 @@
 - type FileUpload
 - type GitCommitResponse
 - type GitStatus
+- type GpuType
 - type ImageParams
 - type LspLanguageID
 - type OutputMessage
@@ -35,6 +36,7 @@
 - type PtySize
 - type Resources
 - type SandboxBaseParams
+- type SandboxClass
 - type ScreenshotOptions
 - type ScreenshotRegion
 - type ScreenshotResponse
@@ -68,6 +70,7 @@ import "github.com/daytonaio/daytona/libs/sdk-go/pkg/types"
 - [type FileUpload](https://www.daytona.io/docs/en<#FileUpload>)
 - [type GitCommitResponse](https://www.daytona.io/docs/en<#GitCommitResponse>)
 - [type GitStatus](https://www.daytona.io/docs/en<#GitStatus>)
+- [type GpuType](https://www.daytona.io/docs/en<#GpuType>)
 - [type ImageParams](https://www.daytona.io/docs/en<#ImageParams>)
 - [type LspLanguageID](https://www.daytona.io/docs/en<#LspLanguageID>)
 - [type OutputMessage](https://www.daytona.io/docs/en<#OutputMessage>)
@@ -79,6 +82,7 @@ import "github.com/daytonaio/daytona/libs/sdk-go/pkg/types"
 - [type PtySize](https://www.daytona.io/docs/en<#PtySize>)
 - [type Resources](https://www.daytona.io/docs/en<#Resources>)
 - [type SandboxBaseParams](https://www.daytona.io/docs/en<#SandboxBaseParams>)
+- [type SandboxClass](https://www.daytona.io/docs/en<#SandboxClass>)
 - [type ScreenshotOptions](https://www.daytona.io/docs/en<#ScreenshotOptions>)
 - [type ScreenshotRegion](https://www.daytona.io/docs/en<#ScreenshotRegion>)
 - [type ScreenshotResponse](https://www.daytona.io/docs/en<#ScreenshotResponse>)
@@ -148,6 +152,7 @@ type CreateSnapshotParams struct {
     Resources      *Resources
     Entrypoint     []string
     SkipValidation *bool
+    SandboxClass   *SandboxClass
 }
 ```
 
@@ -322,6 +327,24 @@ type GitStatus struct {
 }
 ```
 
+<a name="GpuType"></a>
+## type GpuType
+
+GpuType identifies a specific NVIDIA GPU model. Used in \[Resources.GpuType\] as an ordered preference list — the scheduler tries each in order and pins the sandbox/snapshot to the first that has capacity. It is an alias for the API client's GpuType type.
+
+```go
+type GpuType = apiclient.GpuType
+```
+
+<a name="GpuTypeH100"></a>
+
+```go
+const (
+    GpuTypeH100       GpuType = apiclient.GPUTYPE_H100
+    GpuTypeRtxPro6000 GpuType = apiclient.GPUTYPE_RTX_PRO_6000
+)
+```
+
 <a name="ImageParams"></a>
 ## type ImageParams
 
@@ -454,10 +477,11 @@ Resources represents resource allocation for a sandbox.
 
 ```go
 type Resources struct {
-    CPU    int
-    GPU    int
-    Memory int
-    Disk   int
+    CPU     int
+    GPU     int
+    GpuType []GpuType
+    Memory  int
+    Disk    int
 }
 ```
 
@@ -481,7 +505,32 @@ type SandboxBaseParams struct {
     NetworkBlockAll     bool
     NetworkAllowList    *string
     Ephemeral           bool
+    // LinkedSandbox is the ID or name of an existing sandbox to link the new sandbox to.
+    // The new sandbox will be scheduled on the same runner as the linked sandbox so a local
+    // network can be established between them.
+    // Linked sandboxes must be ephemeral (AutoDeleteInterval=0) and cannot themselves be
+    // linked to another sandbox.
+    LinkedSandbox string
 }
+```
+
+<a name="SandboxClass"></a>
+## type SandboxClass
+
+SandboxClass determines which runners can host sandboxes created from a snapshot. It is an alias for the API client's SandboxClass type.
+
+```go
+type SandboxClass = apiclient.SandboxClass
+```
+
+<a name="SandboxClassLinuxVM"></a>
+
+```go
+const (
+    SandboxClassLinuxVM   SandboxClass = apiclient.SANDBOXCLASS_LINUX_VM
+    SandboxClassContainer SandboxClass = apiclient.SANDBOXCLASS_CONTAINER
+    SandboxClassAndroid   SandboxClass = apiclient.SANDBOXCLASS_ANDROID
+)
 ```
 
 <a name="ScreenshotOptions"></a>
@@ -602,7 +651,7 @@ VolumeMount represents a volume mount configuration
 
 ```go
 type VolumeMount struct {
-    VolumeID  string
+    VolumeID  string // ID or name of the volume to mount
     MountPath string
     Subpath   *string // Optional subpath within the volume; nil = mount entire volume
 }

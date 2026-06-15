@@ -392,6 +392,7 @@ Base parameters for creating a new Sandbox.
 - `ephemeral?` _boolean_ - Whether the Sandbox should be ephemeral. If true, autoDeleteInterval will be set to 0.
 - `labels?` _Record\<string, string\>_ - Sandbox labels
 - `language?` _string_ - Programming language for direct code execution. Defaults to "python" if not specified.
+- `linkedSandbox?` _string_ - ID or name of an existing sandbox to link the new sandbox to. The new sandbox will be scheduled on the same runner as the linked sandbox so a local network can be established between them. Linked sandboxes must be ephemeral (autoDeleteInterval=0) and cannot themselves be linked to another sandbox.
 - `name?` _string_
 - `networkAllowList?` _string_ - Comma-separated list of allowed CIDR network addresses for the Sandbox
 - `networkBlockAll?` _boolean_ - Whether to block all network access for the Sandbox
@@ -413,6 +414,7 @@ Parameters for creating a new Sandbox.
     the image will be dynamically built.
 - `labels?` _Record\<string, string\>_
 - `language?` _string_
+- `linkedSandbox?` _string_
 - `name?` _string_
 - `networkAllowList?` _string_
 - `networkBlockAll?` _boolean_
@@ -434,6 +436,7 @@ Parameters for creating a new Sandbox from a snapshot.
 - `ephemeral?` _boolean_
 - `labels?` _Record\<string, string\>_
 - `language?` _string_
+- `linkedSandbox?` _string_
 - `name?` _string_
 - `networkAllowList?` _string_
 - `networkBlockAll?` _boolean_
@@ -481,6 +484,7 @@ Resource allocation for a Sandbox.
 - `cpu?` _number_ - CPU allocation for the Sandbox in cores
 - `disk?` _number_ - Disk space allocation for the Sandbox in GiB
 - `gpu?` _number_ - GPU allocation for the Sandbox in units
+- `gpuType?` _GpuType \| GpuType\[\]_ - Preferred GPU type for the Sandbox
 - `memory?` _number_ - Memory allocation for the Sandbox in GiB
 
 
@@ -504,7 +508,7 @@ Represents a volume mount for a Sandbox.
 
 - `subpath?` _string_ - Optional subpath within the volume to mount. When specified, only this S3 prefix will be accessible. When omitted, the entire volume is mounted.
     - _Inherited from_: `SandboxVolume.subpath`
-- `volumeId` _string_ - ID of the Volume to mount
+- `volumeId` _string_ - ID or name of the Volume to mount
 
 
 

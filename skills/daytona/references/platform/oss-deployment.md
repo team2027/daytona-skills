@@ -192,10 +192,10 @@ openssl rand -hex 16
 The script updates `docker/dex/config.yaml` to set:
 
 - `issuer` to `https://YOUR_DOMAIN/dex`
-- `redirectURIs` to use `https://YOUR_DOMAIN` instead of `localhost`
+- `redirectURIs` to use `https://YOUR_DOMAIN` and `https://YOUR_DOMAIN/dashboard` instead of `localhost`
 - `staticPasswords` with your chosen email and bcrypt-hashed password
 > **Caution:**
-> The `redirectURIs` must use `https://` and your actual domain. If these still reference `localhost`, OIDC callbacks will fail after login.
+> The `redirectURIs` must use `https://`, your actual domain, and include the `/dashboard` callback URI. If these still reference `localhost` or omit `/dashboard`, OIDC callbacks will fail after login.
 
 To generate a bcrypt password hash manually:
 
@@ -470,6 +470,7 @@ Below is a full list of environment variables with their default values:
 | `FAILED_SNAPSHOT_RUNNER_RETENTION_HOURS`   | number  | `3`                                                  | Hours to retain failed snapshot runner records before cleanup                                                                                             |
 | `BUILDINFO_SNAPSHOT_RUNNER_STALENESS_DAYS` | number  | `7`                                                  | Days of inactivity before a snapshot runner is considered stale and eligible for cleanup                                                                  |
 | `DONT_SERVE_DASHBOARD`                     | boolean | `false`                                              | Disable serving dashboard static files from API service                                                                                                   |
+| `BACKUP_RETRY_INTERVAL_HOURS`              | number  | `6`                                                  | Hours to wait before automatically retrying backups that failed due to transient errors (e.g. connection refused, connection reset). Set to `0` to disable automatic backup retries |
 
 ### Runner
 
@@ -496,6 +497,7 @@ Below is a full list of environment variables with their default values:
 | `AWS_DEFAULT_BUCKET`                    | string  | `daytona`                         | AWS default bucket name                               |
 | `DAEMON_START_TIMEOUT_SEC`              | number  | `60`                              | Daemon start timeout in seconds                       |
 | `SANDBOX_START_TIMEOUT_SEC`             | number  | `30`                              | Sandbox start timeout in seconds                      |
+| `ANDROID_BOOT_TIMEOUT_SEC`              | number  | `300`                             | Android emulator boot timeout in seconds              |
 | `USE_SNAPSHOT_ENTRYPOINT`               | boolean | `false`                           | Use snapshot entrypoint for sandbox                   |
 | `RUNNER_DOMAIN`                         | string  | (none)                            | Runner domain name (hostname for runner URLs)         |
 | `VOLUME_CLEANUP_INTERVAL`               | number  | `30s`                             | Volume cleanup interval in seconds (minimum: 10s)     |
@@ -511,6 +513,7 @@ Below is a full list of environment variables with their default values:
 | `CONTAINER_NETWORK`                     | string  | (none)                            | Custom docker network for sandboxes                   |
 | `INTER_SANDBOX_NETWORK_ENABLED`         | boolean | `false`                           | Enable or disable inter-sandbox network connectivity  |
 | `BUILD_ENGINE`                          | string  | `buildkit`                        | Docker image build engine (`buildkit` or `legacy`)    |
+| `MOUNT_KVM_TO_ANDROID_SANDBOX`          | boolean | `false`                           | Mount KVM device to Android sandbox                   |
 
 ### SSH Gateway
 
@@ -557,7 +560,7 @@ Navigate to `Applications` > `Applications` in the left sidebar and select the a
 In the `Allowed Callback URIs` field, add the following URLs:
 
 ```
-http://localhost:3000
+http://localhost:3000/dashboard
 http://localhost:3000/api/oauth2-redirect.html
 http://localhost:4000/callback
 http://proxy.localhost:4000/callback
@@ -566,7 +569,7 @@ http://proxy.localhost:4000/callback
 For `Allowed Logout URIs`, add:
 
 ```
-http://localhost:3000
+http://localhost:3000/dashboard
 ```
 
 And for `Allowed Web Origins`, add:

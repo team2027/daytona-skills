@@ -55,11 +55,31 @@ Install the Daytona CLI to interact with Daytona sandboxes from the command line
 brew install daytonaio/cli/daytona
 ```
 
+Trust the tap once so routine `brew upgrade` keeps the Daytona CLI up to date. Recent Homebrew versions require third-party taps to be explicitly trusted; without it, a bare `brew upgrade` skips the Daytona tap and the CLI goes stale:
+
+```bash
+brew trust daytonaio/cli
+```
+
 To upgrade the Daytona CLI to the latest version:
 
 ```bash
 brew upgrade daytonaio/cli/daytona
 ```
+
+Alternatively, install directly without Homebrew:
+
+For Apple Silicon (`arm64`):
+
+  ```bash
+  sudo curl -fL https://github.com/daytonaio/daytona/releases/latest/download/daytona-darwin-arm64 -o /usr/local/bin/daytona && sudo chmod +x /usr/local/bin/daytona
+  ```
+
+For Intel (`amd64`):
+
+  ```bash
+  sudo curl -fL https://github.com/daytonaio/daytona/releases/latest/download/daytona-darwin-amd64 -o /usr/local/bin/daytona && sudo chmod +x /usr/local/bin/daytona
+  ```
 
 **Linux:**
 
@@ -141,7 +161,6 @@ __Flags__
 | `--auto-archive` |  | Auto-archive interval in minutes (0 means the maximum interval will be used) |
 | `--auto-delete` |  | Auto-delete interval in minutes (negative value means disabled, 0 means delete immediately upon stopping) |
 | `--auto-stop` |  | Auto-stop interval in minutes (0 means disabled) |
-| `--class` |  | Sandbox class type (small, medium, large) |
 | `--context` | `-c` | Files or directories to include in the build context (can be specified multiple times) |
 | `--cpu` |  | CPU cores allocated to the sandbox |
 | `--disk` |  | Disk space allocated to the sandbox in GB |
@@ -157,7 +176,7 @@ __Flags__
 | `--snapshot` |  | Snapshot to use for the sandbox |
 | `--target` |  | Target region (eu, us) |
 | `--user` |  | User associated with the sandbox |
-| `--volume` | `-v` | Volumes to mount (format: VOLUME_NAME:MOUNT_PATH) |
+| `--volume` | `-v` | Volumes to mount (format: VOLUME_ID_OR_NAME:MOUNT_PATH) |
 | `--help` |  | help for daytona |
 
 
@@ -562,7 +581,7 @@ __Flags__
 Delete a volume
 
 ```shell
-daytona volume delete [VOLUME_ID] [flags]
+daytona volume delete [VOLUME_ID_OR_NAME] [flags]
 ```
 
 __Flags__
@@ -575,7 +594,7 @@ __Flags__
 Get volume details
 
 ```shell
-daytona volume get [VOLUME_ID] [flags]
+daytona volume get [VOLUME_ID_OR_NAME] [flags]
 ```
 
 __Flags__
