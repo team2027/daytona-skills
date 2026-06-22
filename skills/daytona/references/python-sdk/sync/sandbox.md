@@ -589,35 +589,30 @@ def resize(resources: Resources, timeout: float | None = 60) -> None
 
 Resizes the Sandbox resources.
 
-Changes the CPU, memory, or disk allocation for the Sandbox. Hot resize (on running
-sandbox) only allows CPU/memory increases. Disk resize requires a stopped sandbox.
+Changes the CPU, memory, or disk allocation. Hot resize (on a running Sandbox) accepts
+only CPU and memory increases. Disk resize requires a stopped Sandbox; disk can only
+grow. GPU is not resizable — to change GPU, create a new Sandbox.
 
 **Arguments**:
 
-- `resources` _Resources_ - New resource configuration. Only specified fields will be updated.
-  - cpu: Number of CPU cores (minimum: 1). For hot resize, can only be increased.
-  - memory: Memory in GiB (minimum: 1). For hot resize, can only be increased.
-  - disk: Disk space in GiB (can only be increased, requires stopped sandbox).
-- `timeout` _Optional[float]_ - Timeout (in seconds) for the resize operation. 0 means no timeout.
-  Default is 60 seconds.
+- `resources` _Resources_ - New resource configuration. Only cpu, memory, and disk are
+  applied; setting gpu or gpu_type raises an error.
+- `timeout` _Optional[float]_ - Timeout in seconds for the resize operation. 0 means no
+  timeout. Default is 60 seconds.
 
 
 **Raises**:
 
-- `DaytonaError` - If hot resize constraints are violated (CPU/memory decrease on running sandbox).
-- `DaytonaError` - If disk resize attempted on running sandbox.
-- `DaytonaError` - If disk size decrease is attempted.
-- `DaytonaError` - If resize operation times out.
-- `DaytonaError` - If no resource changes are specified.
+- `DaytonaError` - If hot-resize constraints are violated, disk resize is attempted on
+  a running Sandbox, disk decrease is attempted, no fields are provided, gpu or
+  gpu_type is set, or the operation times out.
 
 
 **Example**:
 
 ```python
-# Increase CPU/memory on running sandbox (hot resize)
 sandbox.resize(Resources(cpu=4, memory=8))
 
-# Change disk (sandbox must be stopped)
 sandbox.stop()
 sandbox.resize(Resources(cpu=2, memory=4, disk=30))
 ```
@@ -704,6 +699,30 @@ It is useful for keeping long-running sessions alive while there is still user a
 sandbox.refresh_activity()
 ```
 
+#### Sandbox.pause
+
+```python
+@intercept_errors(message_prefix="Failed to pause sandbox")
+@with_instrumentation()
+def pause(timeout: float = 60) -> None
+```
+
+Pauses the Sandbox, freezing all running processes.
+
+The Sandbox will enter a 'pausing' state and transition to 'paused' when
+complete. While paused, the Sandbox retains its state in memory but does
+not consume CPU cycles.
+
+**Arguments**:
+
+- `timeout` - Maximum time to wait in seconds. 0 means no timeout.
+  Defaults to 60-second timeout.
+
+
+**Raises**:
+
+- `DaytonaError` - If timeout is negative or the operation fails/times out.
+
 
 ## Resources
 
@@ -720,6 +739,7 @@ Resources configuration for Sandbox.
 - `memory` _int | None_ - Amount of memory in GiB to allocate.
 - `disk` _int | None_ - Amount of disk space in GiB to allocate.
 - `gpu` _int | None_ - Number of GPUs to allocate.
+- `gpu_type` _GpuType | list[GpuType] | None_ - Preferred GPU type for the Sandbox.
 
 
 **Example**:
@@ -729,7 +749,8 @@ resources = Resources(
     cpu=2,
     memory=4,  # 4GiB RAM
     disk=20,   # 20GiB disk
-    gpu=1
+    gpu=1,
+    gpu_type=GpuType.H100,
 )
 params = CreateSandboxFromImageParams(
     image=Image.debian_slim("3.12"),

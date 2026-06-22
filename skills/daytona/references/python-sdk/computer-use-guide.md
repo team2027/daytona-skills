@@ -9,6 +9,7 @@
 - Get process errors
 - Mouse operations
 - Keyboard operations
+- Accessibility operations
 - Screenshot operations
 - Screen Recording
 - Display operations
@@ -20,9 +21,9 @@ Computer Use enables programmatic control of desktop environments within sandbox
 
 Computer Use and [VNC](./vnc-access.md) work together to enable both manual and automated desktop interactions. VNC provides the visual interface for users to manually interact with the desktop, while Computer Use provides the programmatic API for AI agents to automate operations.
 
-Computer Use is available for **Linux**. **Windows** and **macOS** support is currently in private alpha.
-> **Caution: Private Alpha**
-> Computer Use for macOS and Windows is currently in private alpha and requires access. To request access, fill out the [Windows](https://docs.google.com/forms/d/e/1FAIpQLSfoK-77-VpfsMubw8F4f1opCxIL1AyJUgnM0ONYup5hZ0RTvQ/viewform?usp=dialog) or [macOS](https://docs.google.com/forms/d/e/1FAIpQLSc9xlGZ49OjWNkyzDPC9Ip3InMRR0ZXY3tcoD-PFQj3ck6gzQ/viewform?usp=sharing&ouid=103304973264148733944) access request form. Our team will review your request and reach out with setup instructions.
+Computer Use is available for **Linux** and **Windows**. **macOS** support is currently in private alpha.
+> **Note: macOS access**
+> Computer Use for macOS is currently in private alpha and requires access. To request access, fill out the [macOS access request form](https://docs.google.com/forms/d/e/1FAIpQLSc9xlGZ49OjWNkyzDPC9Ip3InMRR0ZXY3tcoD-PFQj3ck6gzQ/viewform?usp=sharing&ouid=103304973264148733944). Our team will review your request and reach out with setup instructions.
 
 - **GUI application testing**: automate interactions with native applications, click buttons, fill forms, and validate UI behavior
 - **Visual testing & screenshots**: capture screenshots of applications, compare UI states, and perform visual regression testing
@@ -207,6 +208,90 @@ sandbox.computer_use.keyboard.hotkey("alt+tab")
 
 Common aliases like `Return` → `enter`, `control` → `ctrl`, `command` / `meta` / `win` → `cmd`, and `option` → `alt` are normalized automatically. Unsupported or malformed inputs return an error, sometimes with a suggested alternative.
 
+## Accessibility operations
+
+Use Linux accessibility operations to inspect the AT-SPI tree and interact with UI elements by node ID. Start Computer Use before calling accessibility methods.
+> **Note: App accessibility support**
+> Accessibility operations read the semantic UI information that applications expose over AT-SPI. Apps or custom widgets that do not expose accessibility objects may return sparse nodes, generic roles, or no actionable nodes; mouse, keyboard, and screenshot operations remain available for those cases.
+
+### Get tree
+
+Read an accessibility tree for the focused app, a specific process, or all apps.
+
+```python
+# Focused app
+focused_tree = sandbox.computer_use.accessibility.get_tree(scope="focused", max_depth=2)
+
+# Specific process
+process_tree = sandbox.computer_use.accessibility.get_tree(
+    scope="pid",
+    pid=1234,
+    max_depth=2,
+)
+
+# All apps
+desktop_tree = sandbox.computer_use.accessibility.get_tree(scope="all", max_depth=2)
+```
+
+### Find nodes
+
+Search the accessibility tree by role, accessible name, state, and scope.
+
+```python
+# Find buttons by accessible name
+buttons = sandbox.computer_use.accessibility.find_nodes(
+    scope="focused",
+    role="button",
+    name="Submit",
+    name_match="substring",
+    limit=10,
+)
+
+# Find text entries in a process
+entries = sandbox.computer_use.accessibility.find_nodes(
+    scope="pid",
+    pid=1234,
+    role="entry",
+    states=["enabled", "focusable"],
+    limit=10,
+)
+
+# Find visible nodes across all apps
+visible_nodes = sandbox.computer_use.accessibility.find_nodes(
+    scope="all",
+    states=["visible"],
+    limit=20,
+)
+```
+
+### Focus node
+
+Move keyboard focus to a node returned by `get_tree` or `find_nodes`.
+
+```python
+sandbox.computer_use.accessibility.focus_node("node-id")
+```
+
+### Invoke node
+
+Run a node action, such as pressing a button.
+
+```python
+# Invoke the primary action
+sandbox.computer_use.accessibility.invoke_node("node-id")
+
+# Invoke a named action
+sandbox.computer_use.accessibility.invoke_node("node-id", action="click")
+```
+
+### Set node value
+
+Write text or value content to nodes that support value changes.
+
+```python
+sandbox.computer_use.accessibility.set_node_value("node-id", "hello")
+```
+
 ## Screenshot operations
 
 ### Take full screen
@@ -264,7 +349,7 @@ from daytona import ScreenshotRegion, ScreenshotOptions
 region = ScreenshotRegion(x=0, y=0, width=800, height=600)
 screenshot = sandbox.computer_use.screenshot.take_compressed_region(
     region,
-    ScreenshotOptions(format="webp", quality=80, show_cursor=True)
+    ScreenshotOptions(format="jpeg", quality=80, show_cursor=True)
 )
 print(f"Compressed size: {screenshot.size_bytes} bytes")
 ```
